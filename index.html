@@ -1,0 +1,217 @@
+<html>
+	<head>
+		<title>Ropes</title>
+
+		<style>
+			body { margin: 0; overflow: hidden}
+			html {
+				background: black;
+			}
+			canvas {
+				border: 0px solid black;
+				display: inline-block;
+				margin: 0;
+				background: black;
+			}
+		</style>
+	</head>
+	<body>
+		
+
+		<canvas id="canvas"></canvas>
+
+		<script src="javascripts/jquery.js"></script>
+		<script src="javascripts/vector.js"></script>
+		<script src="javascripts/helper.js"></script>
+		<script>
+			var canvas = document.getElementById("canvas");
+			var ctx = canvas.getContext("2d");
+
+			// Setup game canvas
+			canvas.width = window.innerWidth;
+			canvas.height = window.innerHeight;
+
+			let gravity = new Vector(0, 9.81);
+
+			class Node {
+				constructor(pos) {
+					this.pos = new Vector(pos.x, pos.y);
+					this.prevPos = this.pos.copy();
+				}
+
+				update() {
+					let old = this.pos.copy();
+
+					this.pos.add(Vector.add(Vector.sub(this.pos, this.prevPos), Vector.mult(gravity, dt*dt*100)))
+
+					this.prevPos = old;
+				}
+
+				draw() {
+					drawCircle(this.pos.x, this.pos.y, 5, 1, "white")
+				}
+			}
+
+			class Rope {
+				constructor() {
+					this.iterations = 80;
+
+					this.totalNodes = 80;
+					this.nodeDistance = 10;
+
+					this.nodes = [];
+
+					this.init();
+				}
+
+				init() {
+					let {totalNodes, nodes, nodeDistance} = this;
+
+					let pos = new Vector(canvas.width/2, canvas.height/2);
+					for (let i = 0; i < totalNodes; i++) {
+						nodes[i] = new Node(pos);
+						pos.y -= nodeDistance;
+					}
+				}
+
+				update() {
+					this.simulate();
+					for (let i = 0; i < this.iterations; i++) {
+						this.applyConstraints();
+					}
+				}
+
+				simulate() {
+					for (let node of this.nodes) {
+						node.update();
+					}
+				}
+
+				applyConstraints() {
+					for (let i = 0; i < this.nodes.length-1; i++) {
+						let node1 = this.nodes[i];
+						let node2 = this.nodes[i+1];
+
+						if (i == 0) {
+
+							if (mouse.left) {
+								if (Vector.dist(mouse.pos, node1.pos) < 50 || this.locked) {
+									node1.pos = mouse.pos.copy();
+									this.locked = true;
+								} else {
+									node1.pos.add(Vector.div( Vector.sub(mouse.pos.copy(), node1.pos), 100))
+								}
+							} else {
+								this.locked = false;
+							}
+
+						}
+
+						if (node1.pos.y > canvas.height) {
+							node1.pos.y = canvas.height;
+							node1.prevPos.x += (node1.pos.x-node1.prevPos.x)/2000;
+						}
+						if (node1.pos.y < 0) {
+							node1.pos.y = 0;
+						}
+						if (node1.pos.x > canvas.width) {
+							node1.pos.x = canvas.width;
+						}
+						if (node1.pos.x < 0) {
+							node1.pos.x = 0;
+						}
+
+						let diff = Vector.sub(node1.pos, node2.pos);
+						let dist = Vector.dist(node1.pos, node2.pos);
+						let difference = 0;
+						if (dist > 0) {
+							difference = (this.nodeDistance - dist) / dist;
+						}
+
+						diff.mult(0.5 * difference)
+
+						let translate = diff.copy();
+
+						node1.pos.add(translate);
+						node2.pos.sub(translate);
+					}
+				}
+
+				draw() {
+					/*for (let node of this.nodes) {
+						node.draw();
+					}*/
+
+					for (let i = 0; i < this.nodes.length-1; i++) {
+						let node1 = this.nodes[i];
+						let node2 = this.nodes[i+1];
+
+						drawLine(node1.pos.x, node1.pos.y, node2.pos.x, node2.pos.y, 5, "white", 1, "round")
+					}
+				}
+			}
+
+			let rope = new Rope();
+			
+			function update() {
+				rope.update();
+			}
+
+			function draw() {
+				ctx.clearRect(0, 0, canvas.width, canvas.height)
+				rope.draw();
+
+				drawText("Hold the mouse down to drag the rope around", canvas.width/2, canvas.height-20, "20px Arial", "white", "center", "bottom")
+			}
+
+			// Update loop
+			var dt = 4/1000;
+			setInterval(function () {
+				update();
+				draw();
+			}, dt*1000)
+			
+			
+
+		    var map = {};
+			onkeydown = onkeyup = function(e){
+			    e = e || event; 
+			    map[e.keyCode] = e.type == 'keydown';
+			}
+
+			var mouse = new Vector();
+			$(document).on("mousemove", function (e) {
+				mouse.pos = new Vector(e.offsetX, e.offsetY)
+			})
+
+			$(document).on('mousedown', function (e) {
+				if (e.which == 1) {
+					mouse.left = true;
+				} else if (e.which == 2) {
+					mouse.middle = true;
+				} else if (e.which == 3) {
+					mouse.right = true;
+				}
+				e.preventDefault();
+			}).on('mouseup', function (e) {
+				if (e.which == 1) {
+					mouse.left = false;
+				} else if (e.which == 2) {
+					mouse.middle = false;
+				} else if (e.which == 3) {
+					mouse.right = false;
+				}
+				e.preventDefault();
+			})
+
+			window.oncontextmenu = function () {
+				return false;
+			}
+
+			$(window).resize(function () {
+				canvas.width = window.innerWidth;
+				canvas.height = canvas.width/2;
+			})
+		</script>
+	</body>
+</html>
