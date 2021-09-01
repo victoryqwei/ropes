@@ -54,6 +54,8 @@
 
 			class Rope {
 				constructor() {
+					this.width = 10;
+
 					this.iterations = 80;
 
 					this.totalNodes = 80;
@@ -71,6 +73,7 @@
 					for (let i = 0; i < totalNodes; i++) {
 						nodes[i] = new Node(pos);
 						pos.y -= nodeDistance;
+						pos.x += Math.random()
 					}
 				}
 
@@ -107,8 +110,8 @@
 
 						}
 
-						if (node1.pos.y > canvas.height) {
-							node1.pos.y = canvas.height;
+						if (node1.pos.y > canvas.height-this.width/2) {
+							node1.pos.y = canvas.height-this.width/2;
 							node1.prevPos.x += (node1.pos.x-node1.prevPos.x)/2000;
 						}
 						if (node1.pos.y < 0) {
@@ -138,15 +141,11 @@
 				}
 
 				draw() {
-					/*for (let node of this.nodes) {
-						node.draw();
-					}*/
-
 					for (let i = 0; i < this.nodes.length-1; i++) {
 						let node1 = this.nodes[i];
 						let node2 = this.nodes[i+1];
 
-						drawLine(node1.pos.x, node1.pos.y, node2.pos.x, node2.pos.y, 5, "white", 1, "round")
+						drawLine(node1.pos.x, node1.pos.y, node2.pos.x, node2.pos.y, this.width, "white", 1, "round")
 					}
 				}
 			}
@@ -210,7 +209,7 @@
 
 			$(window).resize(function () {
 				canvas.width = window.innerWidth;
-				canvas.height = canvas.width/2;
+				canvas.height = window.innerHeight;
 			})
 		</script>
 	</body>
